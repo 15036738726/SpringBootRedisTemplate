@@ -3,9 +3,9 @@ package com.example.demo.utils;
 import java.util.List;
 
 /**
- * 回调函数
+ * 列表类型回调接口
  */
 @FunctionalInterface
-public interface FindAllCallBack<T> {
-    List<T> findAll();
+public interface FindAllCallBack {
+    List findAll();
 }

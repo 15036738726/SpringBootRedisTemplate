@@ -5,7 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * 字符串操作
+ * 字符串类型缓存工具类
  */
 @Component
 public class OpsForStringUtil {

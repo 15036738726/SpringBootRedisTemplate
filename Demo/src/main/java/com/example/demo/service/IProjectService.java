@@ -7,5 +7,5 @@ import java.util.List;
 public interface IProjectService {
     List<MyProject> queryAll();
 
-    List<MyProject> queryPage(Long currentPage, Long pageSize);
+    List<MyProject> queryPage(Integer currentPage, Integer pageSize);
 }

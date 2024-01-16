@@ -7,16 +7,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * redis相关操作工具类
+ * redis列表数据缓存工具类
  */
 @Component
-public class OpsForListUtil {
+public class OpsForListUtil<T> {
 
     /**
      * RedisTemplate常用方法（超详细）
      * https://blog.csdn.net/zzvar/article/details/118388897
      */
-
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -31,7 +30,7 @@ public class OpsForListUtil {
      * @param key
      * @return
      */
-    public List getAll(String key){
+    public List<T> getAll(String key){
         return redisTemplate.opsForList().range(key,0,-1);
     }
 
@@ -42,7 +41,7 @@ public class OpsForListUtil {
      * @param endIndex
      * @return
      */
-    public List get(String key,Long startIndex,Long endIndex){
+    public List<T> get(String key,Long startIndex,Long endIndex){
         return redisTemplate.opsForList().range(key,startIndex,endIndex);
     }
 
@@ -52,7 +51,7 @@ public class OpsForListUtil {
      * @param num
      * @return
      */
-    public List tailPop(String key,Long num){
+    public List<T> tailPop(String key,Long num){
         return redisTemplate.opsForList().rightPop(key, num);
     }
 
@@ -62,7 +61,7 @@ public class OpsForListUtil {
      * @param num
      * @return
      */
-    public List headPop(String key,Long num){
+    public List<T> headPop(String key,Long num){
         return redisTemplate.opsForList().leftPop(key, num);
     }
 
@@ -72,11 +71,17 @@ public class OpsForListUtil {
      * @param data
      * @return
      */
-    public Long headPush(String key,Object data){
+    public Long headPush(String key,T data){
         return redisTemplate.opsForList().leftPush(key, data);
     }
 
-    public Long headPushAll(String key,Object data){
+    /**
+     * 从头部插入
+     * @param key
+     * @param data
+     * @return
+     */
+    public Long headPushAll(String key,List<T> data){
         return redisTemplate.opsForList().leftPushAll(key, data);
     }
 
@@ -86,8 +91,18 @@ public class OpsForListUtil {
      * @param data
      * @return
      */
-    public Long tailPush(String key,Object data){
+    public Long tailPush(String key,T data){
         return redisTemplate.opsForList().rightPush(key,data);
+    }
+
+    /**
+     * 从尾部插入
+     * @param key
+     * @param data
+     * @return
+     */
+    public Long tailPushAll(String key,List<T> data){
+        return redisTemplate.opsForList().rightPushAll(key,data);
     }
 
     /**
@@ -96,8 +111,8 @@ public class OpsForListUtil {
      * @param index
      * @return
      */
-    public Object getOnebyIndex(String key,Long index){
-        return redisTemplate.opsForList().index(key, index);
+    public List<T> getOnebyIndex(String key,Long index){
+        return (List<T>) redisTemplate.opsForList().index(key, index);
     }
 
     /**

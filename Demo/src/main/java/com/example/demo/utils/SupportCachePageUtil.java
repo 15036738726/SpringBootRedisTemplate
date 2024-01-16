@@ -1,8 +1,9 @@
 package com.example.demo.utils;
 
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,40 +12,39 @@ import java.util.List;
  * 提供redis缓存服务的分页组件 传入当前页，currentPage 和每页大小pageSize  自动返回redis中缓存的指定范围数据
  */
 @Component
-public class SupportCachePageUtil<T> {
+public class SupportCachePageUtil {
+    Logger logger = LoggerFactory.getLogger(SupportCachePageUtil.class);
 
     @Autowired
     private OpsForListUtil opsForListUtil;
+
     @Autowired
     private OpsForStringUtil opsForStringUtil;
-
-//    @Autowired
-//    private RedisTemplate redisTemplate;
 
     // 对应需要缓存服务的key 都在这里定义
     public static final String PROJECT_INFO_BUSINESS_KEY = "PROJECT_INFO_BUSINESS_KEY";
 
-    public List<T> queryPage(String prefix,Long currentPage,Long pageSize ,FindAllCallBack<T> callBack) {
+    public List queryPage(String prefix,Integer currentPage,Integer pageSize ,FindAllCallBack callBack) {
         String keyForList = prefix + "_LIST";
         String keyForString = prefix + "_STRING";
 
         // 判断是否存在对应的key
         if(!opsForStringUtil.hasKey(keyForList)){
             // 没有 则设置
-            List<T> all = callBack.findAll();
+            List all = callBack.findAll();
+            logger.info("缓存中没有数据,执行业务查询回调方法,callBack.findAll(),查询数据库,并设置到缓存");
             // 设置total
             opsForStringUtil.setValue(keyForString,all.size());
-            all.stream().forEach(e->{
-                opsForListUtil.tailPush(keyForList,e);
-            });
-
+            // 设置data
+            opsForListUtil.tailPushAll(keyForList,all);
+        }else{
+            logger.info("缓存中获取数据");
         }
-        Long total = (Long) opsForStringUtil.getValue(keyForString);
-
-        // 这里开始取数
+        Integer total = (Integer) opsForStringUtil.getValue(keyForString);
+        // 传入参数,创建分页对象,构造方法中自动计算相关分页信息
         MyPage myPage = new MyPage(currentPage,pageSize,total);
-        Long startIndex = myPage.getStartIndex();
-        Long endIndex = myPage.getEndIndex();
+        Long startIndex = Long.valueOf(myPage.getStartIndex());
+        Long endIndex = Long.valueOf(myPage.getEndIndex());
         List list = opsForListUtil.get(keyForList, startIndex, endIndex);
         return  list;
     }
@@ -55,23 +55,27 @@ public class SupportCachePageUtil<T> {
     @Data
     public class MyPage{
         // 每页大小默认设置为10
-        private Long pageSize;
-        private Long currentPage;
-        private Long total;
-        private Long startIndex;
-        private Long endIndex;
-        public MyPage(Long currentPage, Long pageSize, Long total){
+        private Integer pageSize;
+        // 当前页码
+        private Integer currentPage;
+        // 总数
+        private Integer total;
+        // 开始下标
+        private Integer startIndex;
+        // 结束下标
+        private Integer endIndex;
+        public MyPage(Integer currentPage, Integer pageSize, Integer total){
             // 当前页码最小值合法化
             if(currentPage<=0){
-                currentPage = 1L;
+                currentPage = 1;
             }
             // 页面大小最小值合法化
             if(pageSize<=0){
-                pageSize = 10L;
+                pageSize = 10;
             }
             // 数据条数最小值合法化
             if(total<=0){
-                total = 0L;
+                total = 0;
             }
 
             this.currentPage = currentPage;
@@ -79,19 +83,19 @@ public class SupportCachePageUtil<T> {
             this.total = total;
             // 数据为0
             if(this.total==0){
-                this.startIndex = 0L;
-                this.endIndex = 0L;
+                this.startIndex = 0;
+                this.endIndex = 0;
                 return;
             }
             // 页面大小最大值合法化 一页大小超过总记录条数时  9条数据  pageSize=10时 0-9
             if(this.pageSize>=this.total){
-                this.startIndex = 0L;
+                this.startIndex = 0;
                 this.endIndex = this.total-1;
                 return;
             }
 
             // 总页码数
-            long pageNum = this.total / this.pageSize;
+            Integer pageNum = this.total / this.pageSize;
             if(this.total % this.pageSize!=0){
                 // 没有除尽 则多加一页
                 pageNum ++;
