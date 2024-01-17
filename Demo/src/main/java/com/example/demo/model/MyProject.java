@@ -22,17 +22,4 @@ public class MyProject implements Serializable {
     private Integer projectState;
     // 数据更新时间 数据按照更新时间倒排
     private String updateTime;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MyProject myProject = (MyProject) o;
-        return Objects.equals(projectName, myProject.projectName) && Objects.equals(projectState, myProject.projectState) && Objects.equals(updateTime, myProject.updateTime);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(projectName, projectState, updateTime);
-    }
 }

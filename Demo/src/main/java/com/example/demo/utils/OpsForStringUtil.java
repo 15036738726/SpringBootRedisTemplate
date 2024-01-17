@@ -3,6 +3,9 @@ package com.example.demo.utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Set;
 
 /**
  * 字符串类型缓存工具类
@@ -19,6 +22,20 @@ public class OpsForStringUtil {
      */
     public Boolean delete(String key){
         return redisTemplate.delete(key);
+    }
+
+    /**
+     * 模糊删除 传入将要删除的前缀key
+     * @param prex
+     * @return
+     */
+    public Long deleteByPrex(String prex) {
+        Set<String> keys = redisTemplate.keys(prex+"*");
+        if (!CollectionUtils.isEmpty(keys)) {
+            Long delete = redisTemplate.delete(keys);
+            return delete;
+        }
+        return 0L;
     }
 
     /**

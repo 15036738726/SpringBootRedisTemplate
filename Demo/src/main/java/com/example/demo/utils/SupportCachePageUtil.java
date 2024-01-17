@@ -21,13 +21,13 @@ public class SupportCachePageUtil {
     @Autowired
     private OpsForStringUtil opsForStringUtil;
 
-    // 对应需要缓存服务的key 都在这里定义
-    public static final String PROJECT_INFO_BUSINESS_KEY = "PROJECT_INFO_BUSINESS_KEY";
-
     public List queryPage(String prefix,Integer currentPage,Integer pageSize ,FindAllCallBack callBack) {
-        String keyForList = prefix + "_LIST";
-        String keyForString = prefix + "_STRING";
+        String keyForList = prefix + "_LIST_DATA";
+        String keyForString = prefix + "_STRING_TOTAL";
 
+        /**
+         * 这个地方最好加锁,控制一下,只允许一个线程去读取并设置缓存
+         */
         // 判断是否存在对应的key
         if(!opsForStringUtil.hasKey(keyForList)){
             // 没有 则设置

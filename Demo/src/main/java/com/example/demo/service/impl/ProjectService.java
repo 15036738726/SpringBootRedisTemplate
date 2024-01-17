@@ -2,6 +2,7 @@ package com.example.demo.service.impl;
 
 import com.example.demo.model.MyProject;
 import com.example.demo.service.IProjectService;
+import com.example.demo.utils.DefineBusinessCacheKey;
 import com.example.demo.utils.FindAllCallBack;
 import com.example.demo.utils.SupportCachePageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class ProjectService implements IProjectService {
      */
     @Override
     public List<MyProject> queryPage(Integer currentPage,Integer pageSize){
-        List<MyProject> list = supportCachePageUtil.queryPage(SupportCachePageUtil.PROJECT_INFO_BUSINESS_KEY,currentPage,pageSize,new FindAllCallBack(){
+        List<MyProject> list = supportCachePageUtil.queryPage(DefineBusinessCacheKey.PROJECT_INFO_BUSINESS_KEY,currentPage,pageSize,new FindAllCallBack(){
             // 当缓存中没有时，需要指定执行目标业务的"查询所有数据"的方法,查询完成之后,设置到缓存 执行回调函数的调用，去查询数据库
             @Override
             public List<MyProject> findAll() {

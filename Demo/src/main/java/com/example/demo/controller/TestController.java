@@ -1,7 +1,9 @@
-package com.example.demo.test;
+package com.example.demo.controller;
 
 import com.example.demo.model.MyProject;
+import com.example.demo.model.MyUser;
 import com.example.demo.service.IProjectService;
+import com.example.demo.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,10 +19,13 @@ import java.util.List;
 public class TestController {
 
     @Autowired
-    public IProjectService projectService;
+    private IProjectService projectService;
 
     @Autowired
-    public RedisTemplate redisTemplate;
+    private IUserService userService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
     @RequestMapping("/query")
@@ -29,11 +34,19 @@ public class TestController {
         return "哈喽";
     }
 
-    // http://localhost:9092/test/queryPage?currentPage=2&pageSize=10
-    @RequestMapping("/queryPage")
+    // http://localhost:9092/test/queryProjectPage?currentPage=2&pageSize=10
+    @RequestMapping("/queryProjectPage")
     @ResponseBody
-    public List<MyProject> queryPage(Integer currentPage, Integer pageSize){
+    public List<MyProject> queryProjectPage(Integer currentPage, Integer pageSize){
         List<MyProject> list = projectService.queryPage(currentPage,pageSize);
+        return list;
+    }
+
+    // http://localhost:9092/test/queryUserPage?currentPage=2&pageSize=10
+    @RequestMapping("/queryUserPage")
+    @ResponseBody
+    public List<MyUser> queryUserPage(Integer currentPage, Integer pageSize){
+        List<MyUser> list = userService.queryPage(currentPage,pageSize);
         return list;
     }
 
