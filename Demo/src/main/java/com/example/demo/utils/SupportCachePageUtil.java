@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 提供redis缓存服务的分页组件 传入当前页，currentPage 和每页大小pageSize  自动返回redis中缓存的指定范围数据
@@ -21,13 +23,55 @@ public class SupportCachePageUtil {
     @Autowired
     private OpsForStringUtil opsForStringUtil;
 
-    public List queryPage(String prefix,Integer currentPage,Integer pageSize ,FindAllCallBack callBack) {
+    /**
+     * 分页查询并设置缓存
+     * @param prefix
+     * @param currentPage
+     * @param pageSize
+     * @param callBack
+     * @return
+     */
+    public List queryPage(String prefix,Integer currentPage,Integer pageSize ,FindAllCallBack callBack){
         String keyForList = prefix + "_LIST_DATA";
         String keyForString = prefix + "_STRING_TOTAL";
-
+        String setnxKey = prefix + "_SETNX";
         /**
-         * 这个地方最好加锁,控制一下,只允许一个线程去读取并设置缓存
+         * 这个地方最好加锁,控制一下,一个业务缓存请求只允许一个线程去读取并设置缓存
          */
+        // 这个业务是否已经存在线程去处理 设置成功,则返回true,说明没有该业务没有别的线程在执行
+        boolean setNx = opsForStringUtil.trySetNx(setnxKey);
+        // 设置失败,并且缓存中没有数据的时候,才进行加锁处理
+        if(!(setNx&&opsForStringUtil.hasKey(keyForList))){
+            // 加锁
+            Lock lock = new ReentrantLock();
+            lock.lock();
+            // 调用处理方法queryPage
+            List list = handleCore(keyForList, keyForString, currentPage, pageSize, callBack);
+            // 解锁
+            lock.unlock();
+            // 删除setnx值
+            opsForStringUtil.delSetNx(setnxKey);
+            return list;
+        }else{
+            // 没有线程去处理
+            // 调用处理方法queryPage
+            List list = handleCore(keyForList, keyForString, currentPage, pageSize, callBack);
+            // 删除setnx值
+            opsForStringUtil.delSetNx(setnxKey);
+            return list;
+        }
+    }
+
+    /**
+     * 处理核心
+     * @param keyForList
+     * @param keyForString
+     * @param currentPage
+     * @param pageSize
+     * @param callBack
+     * @return
+     */
+    public List handleCore(String keyForList,String keyForString,Integer currentPage,Integer pageSize ,FindAllCallBack callBack) {
         // 判断是否存在对应的key
         if(!opsForStringUtil.hasKey(keyForList)){
             // 没有 则设置
@@ -48,6 +92,32 @@ public class SupportCachePageUtil {
         List list = opsForListUtil.get(keyForList, startIndex, endIndex);
         return  list;
     }
+
+//    public List queryPage(String prefix,Integer currentPage,Integer pageSize ,FindAllCallBack callBack) {
+//        String keyForList = prefix + "_LIST_DATA";
+//        String keyForString = prefix + "_STRING_TOTAL";
+//        String setnxKey = prefix + "_SETNX";
+//
+//        // 判断是否存在对应的key
+//        if(!opsForStringUtil.hasKey(keyForList)){
+//            // 没有 则设置
+//            List all = callBack.findAll();
+//            logger.info("缓存中没有数据,执行业务查询回调方法,callBack.findAll(),查询数据库,并设置到缓存");
+//            // 设置total
+//            opsForStringUtil.setValue(keyForString,all.size());
+//            // 设置data
+//            opsForListUtil.tailPushAll(keyForList,all);
+//        }else{
+//            logger.info("缓存中获取数据");
+//        }
+//        Integer total = (Integer) opsForStringUtil.getValue(keyForString);
+//        // 传入参数,创建分页对象,构造方法中自动计算相关分页信息
+//        MyPage myPage = new MyPage(currentPage,pageSize,total);
+//        Long startIndex = Long.valueOf(myPage.getStartIndex());
+//        Long endIndex = Long.valueOf(myPage.getEndIndex());
+//        List list = opsForListUtil.get(keyForList, startIndex, endIndex);
+//        return  list;
+//    }
 
     /**
      * 专为计算redis取数下标

@@ -16,6 +16,25 @@ public class OpsForStringUtil {
     private RedisTemplate redisTemplate;
 
     /**
+     * 判断是否有对应业务进入临界区 控制
+     * setIfAbsent 方法将键 key 的值设置为 value，并且仅在键不存在时才设置成功。
+     * 如果键已存在，则不进行任何操作，并返回 false；如果设置成功，则返回 true
+     * @param key
+     * @return
+     */
+    public boolean trySetNx(String key){
+        return redisTemplate.opsForValue().setIfAbsent(key, 1);
+    }
+
+    /**
+     * 删除key
+     * @param key
+     */
+    public void delSetNx(String key){
+        redisTemplate.delete(key);
+    }
+
+    /**
      * 删除key
      * @param key
      * @return
